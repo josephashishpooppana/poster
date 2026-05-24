@@ -1,0 +1,26 @@
+name: birthday_poster_app
+description: Poster app for the Roman Catholic Diocese of Cochin.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  image_picker: ^1.1.2
+  path_provider: ^2.1.4
+  share_plus: ^10.0.2
+  image: ^4.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/poster_background.jpeg
