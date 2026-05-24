@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
-    paths:
-      - "birthday_poster_app/**"
-      - ".github/workflows/build-apk.yml"
 
 jobs:
   build:
@@ -15,6 +12,9 @@ jobs:
     defaults:
       run:
         working-directory: birthday_poster_app
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -32,13 +32,13 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter doctor
-        run: flutter doctor -v
+      - name: Create Flutter platforms
+        run: flutter create .
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
+      - name: Build APK
         run: flutter build apk --release
 
       - name: Upload APK
