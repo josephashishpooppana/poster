@@ -9,10 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: birthday_poster_app
-
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -33,12 +29,15 @@ jobs:
           cache: true
 
       - name: Create Flutter platforms
+        working-directory: ./birthday_poster_app
         run: flutter create .
 
       - name: Install dependencies
+        working-directory: ./birthday_poster_app
         run: flutter pub get
 
       - name: Build APK
+        working-directory: ./birthday_poster_app
         run: flutter build apk --release
 
       - name: Upload APK
