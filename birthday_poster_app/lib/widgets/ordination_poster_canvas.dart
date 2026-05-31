@@ -9,27 +9,32 @@ import '../theme/app_theme.dart';
 import '../theme/poster_typography.dart';
 import '../utils/poster_text_fitter.dart';
 
-/// Measured overlay positions for the 1122×1402 ordination template.
+/// Overlay positions from the ordination poster HTML editor (1122×1402 template).
 abstract final class OrdinationLayoutConstants {
-  static const dateLeft = 2.4;
-  static const dateTop = 3.6;
+  static const dateLeft = 0.0;
+  static const dateTop = 4.85;
+  static const dateWidth = 21.93;
+  static const dateHeight = 7.06;
+  static const dateFontEm = 3.5;
+  static const dateLetterSpacingEm = 0.04;
+  static const dateGapEm = 0.6;
 
-  static const photoLeft = 12.8;
-  static const photoTop = 29.8;
-  static const photoWidth = 31.5;
-  static const photoHeight = 21.5;
+  static const photoLeft = 14.05;
+  static const photoTop = 33.03;
+  static const photoWidth = 31.91;
+  static const photoHeight = 29.89;
+  static const photoRadiusEm = 0.65;
 
-  static const infoLeft = 50.2;
-  static const infoTop = 29.6;
-  static const infoWidth = 35.5;
-  static const infoMaxHeight = 14.0;
+  static const infoTop = 37.0;
 
   static const designationEm = 1.55;
   static const givenEm = 2.35;
+  static const designationGapEm = 0.12;
   static const roleTitleEm = 1.05;
   static const roleLocationEm = 0.95;
-  static const nameRoleGapEm = 0.9;
-  static const nameLineGapEm = 0.12;
+  static const rolesGapEm = 0.22;
+  static const roleEntryGapEm = 0.06;
+  static const familyWidthFactor = 0.72;
 }
 
 class OrdinationPosterLayout {
@@ -122,52 +127,36 @@ class _OrdinationDateBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyle = PosterTypography.barlowCondensedDate(
-      fontSize: layout.em * 3.1,
-      letterSpacing: layout.em * 0.02,
-    ).copyWith(color: AppColors.ordinationDateText);
+      fontSize: layout.em * OrdinationLayoutConstants.dateFontEm,
+      letterSpacing: layout.em * OrdinationLayoutConstants.dateLetterSpacingEm,
+    ).copyWith(
+      color: AppColors.ordinationDateText,
+      shadows: const [
+        Shadow(
+          color: Color(0x26000000),
+          offset: Offset(0, 1),
+          blurRadius: 1,
+        ),
+      ],
+    );
     final month = parsed.month.toUpperCase();
     final day = parsed.day.toUpperCase();
 
     return Positioned(
       left: layout.xPct(OrdinationLayoutConstants.dateLeft),
       top: layout.yPct(OrdinationLayoutConstants.dateTop),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: layout.xPct(28)),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.ordinationDateBadge,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(layout.em * 0.55),
-              bottomRight: Radius.circular(layout.em * 0.55),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              layout.em * 0.55,
-              layout.em * 0.4,
-              layout.em * 0.85,
-              layout.em * 0.36,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(month, style: textStyle),
-                if (day.isNotEmpty) ...[
-                  SizedBox(width: layout.em * 0.62),
-                  Text(day, style: textStyle),
-                ],
-              ],
-            ),
-          ),
-        ),
+      width: layout.xPct(OrdinationLayoutConstants.dateWidth),
+      height: layout.yPct(OrdinationLayoutConstants.dateHeight),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(month, style: textStyle),
+          if (day.isNotEmpty) ...[
+            SizedBox(width: layout.em * OrdinationLayoutConstants.dateGapEm),
+            Text(day, style: textStyle),
+          ],
+        ],
       ),
     );
   }
@@ -188,7 +177,7 @@ class _OrdinationPhotoFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     if (photoBytes == null) return const SizedBox.shrink();
 
-    final photoRadius = scaledCssPx(layout.width, 18);
+    final photoRadius = layout.em * OrdinationLayoutConstants.photoRadiusEm;
 
     return Positioned(
       left: layout.xPct(OrdinationLayoutConstants.photoLeft),
@@ -340,10 +329,11 @@ class _OrdinationGoldenPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blockLeft = layout.xPct(OrdinationLayoutConstants.infoLeft);
+    final blockLeft = layout.xPct(data.rolesLeft);
     final blockTop = layout.yPct(OrdinationLayoutConstants.infoTop);
-    final blockWidth = layout.xPct(OrdinationLayoutConstants.infoWidth);
-    final familyWidth = blockWidth * 0.72;
+    final blockWidth = layout.xPct(data.rolesWidth);
+    final blockHeight = layout.yPct(data.rolesHeight);
+    final familyWidth = blockWidth * OrdinationLayoutConstants.familyWidthFactor;
 
     final designationText =
         data.designation.trim().isEmpty ? ' ' : data.designation.trim();
@@ -367,6 +357,7 @@ class _OrdinationGoldenPanel extends StatelessWidget {
     );
     final familyStyle = PosterTypography.greatVibes(
       fontSize: layout.em * data.familyFontSize,
+      height: 1.2,
       color: AppColors.ordinationNameDark,
     );
 
@@ -407,23 +398,21 @@ class _OrdinationGoldenPanel extends StatelessWidget {
       );
     }
 
+    final nameBlockHeight = _nameBlockHeight(
+      layout: layout,
+      designationText: designationText,
+      givenText: givenText,
+      familyText: familyText,
+      nameFit: nameFit,
+      designationStyle: designationStyle,
+      givenStyle: givenStyle,
+      familyStyle: familyStyle,
+      blockWidth: blockWidth,
+      familyWidth: familyWidth,
+    );
+
     RolesFitResult? rolesFit;
     if (entries.isNotEmpty) {
-      final nameColumnHeight = _estimateNameColumnHeight(
-        layout: layout,
-        designationText: designationText,
-        givenText: givenText,
-        familyText: familyText,
-        nameFit: nameFit,
-        designationStyle: designationStyle,
-        givenStyle: givenStyle,
-        familyStyle: familyStyle,
-        blockWidth: blockWidth,
-        familyWidth: familyWidth,
-      );
-
-      final rolesBoxTop = blockTop + nameColumnHeight + layout.em * OrdinationLayoutConstants.nameRoleGapEm;
-      final rolesBoxHeight = layout.yPct(OrdinationLayoutConstants.infoMaxHeight);
       final initialScale =
           data.roleScaleForCount(entries.length) * data.rolesTextScale;
 
@@ -431,11 +420,18 @@ class _OrdinationGoldenPanel extends StatelessWidget {
         entries: entries,
         em: layout.em,
         initialScale: initialScale,
-        boxWidth: blockWidth * (data.rolesWidth / OrdinationLayoutConstants.infoWidth),
-        boxHeight: rolesBoxHeight,
-        boxTop: rolesBoxTop,
+        boxWidth: blockWidth,
+        boxHeight: blockHeight,
+        boxTop: blockTop,
         posterHeight: layout.height,
         styleFor: styleFor,
+        titleEm: OrdinationLayoutConstants.roleTitleEm,
+        locationEm: OrdinationLayoutConstants.roleLocationEm,
+        gapEm: OrdinationLayoutConstants.rolesGapEm,
+        entryGapEm: OrdinationLayoutConstants.roleEntryGapEm,
+        padTopEm: 0,
+        padBottomEm: data.rolesPadBottom,
+        nameBlockHeight: nameBlockHeight,
       );
     }
 
@@ -443,58 +439,73 @@ class _OrdinationGoldenPanel extends StatelessWidget {
       left: blockLeft,
       top: blockTop,
       width: blockWidth,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            designationText,
-            style: designationStyle.copyWith(fontSize: nameFit.designationSize),
-            maxLines: 1,
-            softWrap: false,
-          ),
-          SizedBox(height: layout.em * OrdinationLayoutConstants.nameLineGapEm),
-          Text(
-            givenText,
-            style: givenStyle.copyWith(fontSize: nameFit.givenSize),
-            maxLines: 1,
-            softWrap: false,
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              left: blockWidth * (data.familyOffsetX / 100),
-              top: layout.em * data.familyOffsetY,
+      height: blockHeight,
+      child: ClipRect(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              designationText,
+              style: designationStyle.copyWith(fontSize: nameFit.designationSize),
+              maxLines: 1,
+              softWrap: false,
             ),
-            child: SizedBox(
-              width: familyWidth,
-              child: Text(
-                familyText,
-                style: familyStyle.copyWith(fontSize: nameFit.familySize),
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.visible,
+            SizedBox(height: layout.em * OrdinationLayoutConstants.designationGapEm),
+            Text(
+              givenText,
+              style: givenStyle.copyWith(fontSize: nameFit.givenSize),
+              maxLines: 1,
+              softWrap: false,
+            ),
+            Padding(
+              padding: EdgeInsets.only(
+                left: blockWidth * (data.familyOffsetX / 100),
+                top: layout.em * data.familyOffsetY,
+              ),
+              child: SizedBox(
+                width: familyWidth,
+                child: Text(
+                  familyText,
+                  style: familyStyle.copyWith(fontSize: nameFit.familySize),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                ),
               ),
             ),
-          ),
-          if (entries.isNotEmpty && rolesFit != null) ...[
-            SizedBox(height: layout.em * OrdinationLayoutConstants.nameRoleGapEm),
-            for (var i = 0; i < entries.length; i++) ...[
-              if (i > 0) SizedBox(height: layout.em * 0.22),
-              _OrdinationRoleEntry(
-                title: entries[i].title,
-                location: entries[i].location,
-                titleSize: rolesFit.titleSizes[i],
-                locationSize: rolesFit.locationSizes[i],
-                entryGap: layout.em * 0.06,
-                styleFor: styleFor,
+            if (entries.isNotEmpty && rolesFit != null) ...[
+              const Spacer(),
+              Padding(
+                padding: EdgeInsets.only(
+                  right: layout.em * 0.1,
+                  bottom: layout.em * data.rolesPadBottom,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < entries.length; i++) ...[
+                      if (i > 0) SizedBox(height: layout.em * OrdinationLayoutConstants.rolesGapEm),
+                      _OrdinationRoleEntry(
+                        title: entries[i].title,
+                        location: entries[i].location,
+                        titleSize: rolesFit.titleSizes[i],
+                        locationSize: rolesFit.locationSizes[i],
+                        entryGap: layout.em * OrdinationLayoutConstants.roleEntryGapEm,
+                        styleFor: styleFor,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ],
-        ],
+        ),
       ),
     );
   }
 
-  double _estimateNameColumnHeight({
+  double _nameBlockHeight({
     required OrdinationPosterLayout layout,
     required String designationText,
     required String givenText,
@@ -508,31 +519,21 @@ class _OrdinationGoldenPanel extends StatelessWidget {
   }) {
     var height = 0.0;
 
-    void addLine(String text, TextStyle style, double size) {
+    void addLine(String text, TextStyle style, double size, double maxWidth) {
       if (text.trim().isEmpty) return;
       final painter = TextPainter(
         text: TextSpan(text: text, style: style.copyWith(fontSize: size)),
         maxLines: 1,
         textDirection: ui.TextDirection.ltr,
-      )..layout(maxWidth: blockWidth);
+      )..layout(maxWidth: maxWidth);
       height += painter.height;
     }
 
-    addLine(designationText, designationStyle, nameFit.designationSize);
-    height += layout.em * OrdinationLayoutConstants.nameLineGapEm;
-    addLine(givenText, givenStyle, nameFit.givenSize);
+    addLine(designationText, designationStyle, nameFit.designationSize, blockWidth);
+    height += layout.em * OrdinationLayoutConstants.designationGapEm;
+    addLine(givenText, givenStyle, nameFit.givenSize, blockWidth);
     height += layout.em * data.familyOffsetY;
-    if (familyText.trim().isNotEmpty) {
-      final painter = TextPainter(
-        text: TextSpan(
-          text: familyText,
-          style: familyStyle.copyWith(fontSize: nameFit.familySize),
-        ),
-        maxLines: 1,
-        textDirection: ui.TextDirection.ltr,
-      )..layout(maxWidth: familyWidth);
-      height += painter.height;
-    }
+    addLine(familyText, familyStyle, nameFit.familySize, familyWidth);
 
     return height;
   }
