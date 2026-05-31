@@ -38,8 +38,9 @@ jobs:
           rm -f android/app/build.gradle.kts
           rm -f android/build.gradle.kts
           rm -f android/settings.gradle.kts
-          git checkout -- android/settings.gradle android/app/build.gradle android/build.gradle android/gradle.properties android/gradle/wrapper/gradle-wrapper.properties test/widget_test.dart
+          git checkout -- android/settings.gradle android/app/build.gradle android/build.gradle android/gradle.properties android/gradle/wrapper/gradle-wrapper.properties
           cp android/notification_manifest.xml android/app/src/main/AndroidManifest.xml
+          cp tool/ci_widget_test.dart test/widget_test.dart
 
       - name: Install dependencies
         working-directory: ./birthday_poster_app
