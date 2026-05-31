@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  google_fonts: ^6.2.1
   image_picker: ^1.1.2
   path_provider: ^2.1.4
   share_plus: ^10.0.2
@@ -24,3 +23,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/poster_background.jpeg
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Variable.ttf
+    - family: Barlow Condensed
+      fonts:
+        - asset: assets/fonts/BarlowCondensed-ExtraBold.ttf
+          weight: 800
+    - family: Great Vibes
+      fonts:
+        - asset: assets/fonts/GreatVibes-Regular.ttf
