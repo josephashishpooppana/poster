@@ -123,13 +123,21 @@ class PosterTextFitter {
     required double boxTop,
     required double posterHeight,
     required TextStyle Function(double fontSize, {required bool isTitle}) styleFor,
+    double titleEm = 1.22,
+    double locationEm = 1.05,
+    double gapEm = 0.28,
+    double entryGapEm = 0.08,
+    double padTopEm = 0.35,
+    double padBottomEm = 0,
+    double? nameBlockHeight,
   }) {
     var scale = initialScale;
-    final titleBase = em * 1.22;
-    final locationBase = em * 1.05;
-    final gap = em * 0.28;
-    final padTop = em * 0.35;
-    final entryGap = em * 0.08;
+    final titleBase = em * titleEm;
+    final locationBase = em * locationEm;
+    final gap = em * gapEm;
+    final padTop = em * padTopEm;
+    final entryGap = em * entryGapEm;
+    final padBottom = em * padBottomEm;
     final maxBottom = posterHeight * 0.855;
 
     List<double> titleSizes = [];
@@ -191,8 +199,10 @@ class PosterTextFitter {
         boxWidth: boxWidth,
         styleFor: styleFor,
       );
-      final verticalOverflow =
-          boxTop + contentHeight > maxBottom + 1 || contentHeight > boxHeight + 2;
+      final verticalOverflow = nameBlockHeight != null
+          ? nameBlockHeight + contentHeight + padBottom > boxHeight + 2
+          : boxTop + contentHeight > maxBottom + 1 ||
+              contentHeight > boxHeight + 2;
 
       if (!horizontalOverflow && !verticalOverflow) break;
 
