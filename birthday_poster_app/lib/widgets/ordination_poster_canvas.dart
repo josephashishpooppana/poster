@@ -357,7 +357,6 @@ class _OrdinationGoldenPanel extends StatelessWidget {
     );
     final familyStyle = PosterTypography.greatVibes(
       fontSize: layout.em * data.familyFontSize,
-      height: 1.2,
       color: AppColors.ordinationNameDark,
     );
 
