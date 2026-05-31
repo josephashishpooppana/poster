@@ -29,6 +29,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/poster_background.jpeg
+    - assets/ordination_poster_background.png
     - assets/data/dob.csv
     - assets/data/ordination.csv
   fonts:

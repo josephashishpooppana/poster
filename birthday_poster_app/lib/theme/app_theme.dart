@@ -7,6 +7,10 @@ class AppColors {
   static const panelBorder = Color(0xFFD0DDD8);
   static const dateBadge = Color(0xFF5F746D);
   static const dateText = Color(0xFFD1D9D6);
+  static const ordinationDateBadge = Color(0xFF4A3425);
+  static const ordinationDateText = Color(0xFFFFFFFF);
+  static const ordinationNameDark = Color(0xFF2C1810);
+  static const ordinationRoleMuted = Color(0xFF5C4A3A);
   static const nameDark = Color(0xFF0A2E26);
   static const roleMuted = Color(0xFF435B55);
 }

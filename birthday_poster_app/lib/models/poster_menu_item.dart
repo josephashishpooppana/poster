@@ -29,9 +29,8 @@ class PosterMenuItem {
       type: PosterType.ordination,
       title: 'Ordination Poster',
       subtitle:
-          'Clergy ordination layout — coming soon; reminders open a prefilled draft',
+          'Priestly ordination anniversary — photo, name, date, and church positions',
       icon: Icons.church_outlined,
-      available: false,
     ),
   ];
 }

@@ -40,6 +40,38 @@ class PosterData {
               ),
             ];
 
+  factory PosterData.ordinationDefaults() {
+    return PosterData(
+      dateText: 'APR 11',
+      designation: 'Rev. Fr.',
+      givenName: 'ARUN MATHEW',
+      familyName: 'Thyparambil',
+      familyOffsetX: 0,
+      familyOffsetY: 0.05,
+      familyFontSize: 2.75,
+      photoPosX: 50,
+      photoPosY: 42,
+      photoZoom: 100,
+      rolesLeft: 48.5,
+      rolesTop: 43.5,
+      rolesWidth: 38,
+      rolesHeight: 13.5,
+      rolesPadBottom: 0.1,
+      rolesAlign: RolesVerticalAlign.top,
+      rolesTextScale: 0.92,
+      positions: [
+        ChurchPosition(
+          title: 'Secretary',
+          location: 'KRLCBC Children Commission',
+        ),
+        ChurchPosition(
+          title: 'Assistant Vicar',
+          location: 'St. Lawrence Church, Edacochin',
+        ),
+      ],
+    );
+  }
+
   String dateText;
   String designation;
   String givenName;
