@@ -15,7 +15,7 @@ class PriestSheetSync {
   static final PriestSheetSync instance = PriestSheetSync._();
 
   /// Set this to your deployed Google Apps Script web app URL.
-  static const String webAppUrl = '';
+  static const String webAppUrl = 'https://script.google.com/macros/s/AKfycbxAZtFm2-pdsi3nPmQtjzZEaaBR_24yAUipGc9s9BgF3sI4A3-UHn_LbyqPiPtHeeW-Bw/exec';
 
   bool get isConfigured => webAppUrl.isNotEmpty;
 
