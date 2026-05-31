@@ -30,11 +30,24 @@ jobs:
 
       - name: Create Flutter platforms
         working-directory: ./birthday_poster_app
-        run: flutter create .
+        run: flutter create . --org com.rcdc --project-name birthday_poster_app
+
+      - name: Fix Gradle duplicates and apply manifest
+        working-directory: ./birthday_poster_app
+        run: |
+          rm -f android/app/build.gradle.kts
+          rm -f android/build.gradle.kts
+          rm -f android/settings.gradle.kts
+          git checkout -- android/settings.gradle android/app/build.gradle android/build.gradle android/gradle.properties android/gradle/wrapper/gradle-wrapper.properties
+          cp android/notification_manifest.xml android/app/src/main/AndroidManifest.xml
 
       - name: Install dependencies
         working-directory: ./birthday_poster_app
         run: flutter pub get
+
+      - name: Run tests
+        working-directory: ./birthday_poster_app
+        run: flutter test
 
       - name: Build APK
         working-directory: ./birthday_poster_app
