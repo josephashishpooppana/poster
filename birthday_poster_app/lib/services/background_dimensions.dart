@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -25,4 +27,46 @@ Future<({int width, int height})?> resolveImageDimensions(
   );
   stream.addListener(listener);
   return completer.future;
+}
+
+/// Resolves dimensions from raw image bytes (e.g. picked gallery file).
+Future<({int width, int height})?> resolveBytesDimensions(
+  Uint8List bytes,
+) async {
+  try {
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    final size = (
+      width: frame.image.width,
+      height: frame.image.height,
+    );
+    frame.image.dispose();
+    return size;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Computes the largest width/height that fits [constraints] at [aspectRatio]
+/// (width ÷ height, matching CSS/HTML `aspect-ratio: W / H`).
+({double width, double height}) fitPosterSize(
+  BoxConstraints constraints,
+  double aspectRatio,
+) {
+  final maxW = constraints.hasBoundedWidth && constraints.maxWidth.isFinite
+      ? constraints.maxWidth
+      : 540.0;
+  final maxH = constraints.hasBoundedHeight && constraints.maxHeight.isFinite
+      ? constraints.maxHeight
+      : maxW / aspectRatio;
+
+  var width = maxW;
+  var height = width / aspectRatio;
+
+  if (height > maxH) {
+    height = maxH;
+    width = height * aspectRatio;
+  }
+
+  return (width: width, height: height);
 }
