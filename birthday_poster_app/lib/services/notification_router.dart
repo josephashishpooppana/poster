@@ -50,9 +50,18 @@ class NotificationRouter {
     _openPoster(event);
   }
 
-  static Future<void> openFromEvent(AnniversaryEvent event) async {
-    await ReminderStore.instance.markHandled(event.id);
+  static Future<void> openPosterFromEvent(
+    AnniversaryEvent event, {
+    bool markHandled = false,
+  }) async {
+    if (markHandled) {
+      await ReminderStore.instance.markHandled(event.id);
+    }
     _openPoster(event);
+  }
+
+  static Future<void> openFromEvent(AnniversaryEvent event) async {
+    await openPosterFromEvent(event, markHandled: true);
   }
 
   static void _openPoster(AnniversaryEvent event) {

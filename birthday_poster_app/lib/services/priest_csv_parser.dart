@@ -80,4 +80,103 @@ class PriestCsvParser {
 
     return DateTime(year, month, day);
   }
+
+  static String formatSheetDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  static String updateBirthdayRow(
+    String csvText,
+    String priestKey, {
+    String? name,
+    String? designation,
+    String? servingAt,
+    String? address,
+    DateTime? birthDate,
+  }) {
+    return _updateRow(
+      csvText,
+      priestKey: priestKey,
+      dateColumn: 'Born',
+      updates: {
+        if (name != null) 'Name': name,
+        if (designation != null) 'Designation': designation,
+        if (servingAt != null) 'Serving At': servingAt,
+        if (address != null) 'Address': address,
+        if (birthDate != null) 'Born': formatSheetDate(birthDate),
+      },
+    );
+  }
+
+  static String updateOrdinationRow(
+    String csvText,
+    String priestKey, {
+    String? name,
+    String? designation,
+    String? servingAt,
+    String? address,
+    DateTime? ordinationDate,
+  }) {
+    return _updateRow(
+      csvText,
+      priestKey: priestKey,
+      dateColumn: 'Ordination',
+      updates: {
+        if (name != null) 'Name': name,
+        if (designation != null) 'Designation': designation,
+        if (servingAt != null) 'Serving At': servingAt,
+        if (address != null) 'Address': address,
+        if (ordinationDate != null)
+          'Ordination': formatSheetDate(ordinationDate),
+      },
+    );
+  }
+
+  static String _updateRow(
+    String csvText, {
+    required String priestKey,
+    required String dateColumn,
+    required Map<String, String> updates,
+  }) {
+    if (updates.isEmpty) return csvText;
+
+    final rows = const CsvToListConverter(eol: '\n').convert(csvText);
+    if (rows.isEmpty) return csvText;
+
+    final headers = rows.first.map((cell) => cell.toString().trim()).toList();
+    var updated = false;
+
+    for (var i = 1; i < rows.length; i++) {
+      final row = rows[i];
+      if (row.isEmpty || row.every((cell) => cell.toString().trim().isEmpty)) {
+        continue;
+      }
+
+      final mapped = <String, String>{};
+      for (var j = 0; j < headers.length; j++) {
+        final value = j < row.length ? row[j].toString().trim() : '';
+        mapped[headers[j]] = value;
+      }
+
+      final name = _cell(mapped, 'Name');
+      if (name.isEmpty) continue;
+      if (PriestRecord.normalizePriestKey(name) != priestKey) continue;
+
+      for (final entry in updates.entries) {
+        final columnIndex = headers.indexOf(entry.key);
+        if (columnIndex == -1) continue;
+        while (row.length <= columnIndex) {
+          row.add('');
+        }
+        row[columnIndex] = entry.value;
+      }
+      updated = true;
+    }
+
+    if (!updated) return csvText;
+
+    return const ListToCsvConverter().convert(rows);
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:birthday_poster_app/models/anniversary_event.dart';
+import 'package:birthday_poster_app/models/priest_record.dart';
 import 'package:birthday_poster_app/services/poster_prefill_mapper.dart';
 import 'package:birthday_poster_app/services/priest_csv_parser.dart';
 import 'package:birthday_poster_app/services/priest_name_parser.dart';
@@ -23,6 +24,26 @@ REV. FR. ANOOP PAUL BLAMPARAMBIL,Assistant Vicar,"St Sebastian's Church, Chellan
     expect(parsed.designation, 'Rev. Fr.');
     expect(parsed.givenName, 'JACOB ELYAS');
     expect(parsed.familyName, 'Thundathil');
+  });
+
+  test('updates birthday csv row by priest key', () {
+    const csv = '''
+Name,Designation,Serving At,Address,Born,Phone,Email
+REV. FR. ANOOP PAUL BLAMPARAMBIL,Assistant Vicar,"St Sebastian Church",,04/01/1992,123,test@example.com
+''';
+    final key = PriestRecord.normalizePriestKey(
+      'REV. FR. ANOOP PAUL BLAMPARAMBIL',
+    );
+    final updated = PriestCsvParser.updateBirthdayRow(
+      csv,
+      key,
+      designation: 'Parish Priest',
+      birthDate: DateTime(1992, 1, 5),
+    );
+
+    final records = PriestCsvParser.parseBirthdayCsv(updated);
+    expect(records.first.designation, 'Parish Priest');
+    expect(records.first.birthDate, DateTime(1992, 1, 5));
   });
 
   test('builds notification body with designation and serving at', () {

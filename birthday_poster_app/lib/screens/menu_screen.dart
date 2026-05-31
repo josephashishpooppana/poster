@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../widgets/anniversary_reminder_banner.dart';
 import 'birthday_poster_screen.dart';
 import 'ordination_poster_screen.dart';
+import 'upcoming_anniversaries_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -46,9 +47,19 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Future<void> _openPoster(BuildContext context, PosterType type) async {
+    if (type == PosterType.upcomingAnniversaries) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const UpcomingAnniversariesScreen()),
+      );
+      if (!mounted) return;
+      await _loadReminders();
+      return;
+    }
+
     final Widget screen = switch (type) {
       PosterType.birthday => const BirthdayPosterScreen(),
       PosterType.ordination => const OrdinationPosterScreen(),
+      PosterType.upcomingAnniversaries => const UpcomingAnniversariesScreen(),
     };
 
     await Navigator.of(context).push(

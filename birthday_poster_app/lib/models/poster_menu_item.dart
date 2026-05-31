@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PosterType { birthday, ordination }
+enum PosterType { birthday, ordination, upcomingAnniversaries }
 
 class PosterMenuItem {
   const PosterMenuItem({
@@ -31,6 +31,13 @@ class PosterMenuItem {
       subtitle:
           'Priestly ordination anniversary — photo, name, date, and church positions',
       icon: Icons.church_outlined,
+    ),
+    PosterMenuItem(
+      type: PosterType.upcomingAnniversaries,
+      title: 'Upcoming Anniversaries',
+      subtitle:
+          'All birthdays and ordinations from today — edit details or create posters',
+      icon: Icons.event_note_outlined,
     ),
   ];
 }

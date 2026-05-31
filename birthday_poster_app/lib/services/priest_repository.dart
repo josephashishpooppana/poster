@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/anniversary_event.dart';
 import '../models/priest_record.dart';
 import 'priest_csv_parser.dart';
+import 'priest_sheet_sync.dart';
 
 class PriestRepository {
   PriestRepository._();
@@ -191,6 +192,100 @@ class PriestRepository {
     final start = DateTime(now.year, now.month, now.day);
     final end = DateTime(now.year, now.month + months, now.day);
     return eventsBetween(start, end);
+  }
+
+  /// All upcoming birthdays and ordinations from today onward (no count limit).
+  List<AnniversaryEvent> upcomingEvents({int yearsAhead = 10}) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day);
+    final end = DateTime(now.year + yearsAhead, now.month, now.day);
+    return eventsBetween(start, end);
+  }
+
+  Future<PriestSheetSyncResult> updatePriest({
+    required String originalKey,
+    required PriestRecord updated,
+    required AnniversaryType eventType,
+  }) async {
+    final index = _priests.indexWhere((p) => p.key == originalKey);
+    if (index == -1) {
+      return const PriestSheetSyncResult(
+        syncedToSheet: false,
+        message: 'Priest not found.',
+      );
+    }
+
+    final existing = _priests[index];
+    final merged = existing.copyWith(
+      fullName: updated.fullName,
+      designation: updated.designation,
+      servingAt: updated.servingAt,
+      address: updated.address,
+      birthDate: eventType == AnniversaryType.birthday
+          ? updated.birthDate ?? existing.birthDate
+          : existing.birthDate,
+      ordinationDate: eventType == AnniversaryType.ordination
+          ? updated.ordinationDate ?? existing.ordinationDate
+          : existing.ordinationDate,
+    );
+
+    _priests[index] = merged;
+    _priests.sort((a, b) => a.fullName.compareTo(b.fullName));
+
+    await _updateCachedCsvs(
+      originalKey: originalKey,
+      updated: merged,
+      eventType: eventType,
+    );
+
+    return PriestSheetSync.instance.syncUpdate(
+      originalKey: originalKey,
+      updated: merged,
+      eventType: eventType,
+    );
+  }
+
+  Future<void> _updateCachedCsvs({
+    required String originalKey,
+    required PriestRecord updated,
+    required AnniversaryType eventType,
+  }) async {
+    final cached = await _readCache();
+    var birthdayCsv = cached?.$1;
+    var ordinationCsv = cached?.$2;
+
+    if (birthdayCsv == null || ordinationCsv == null) {
+      try {
+        birthdayCsv ??= await rootBundle.loadString(_birthdayAsset);
+        ordinationCsv ??= await rootBundle.loadString(_ordinationAsset);
+      } catch (_) {
+        return;
+      }
+    }
+
+    if (eventType == AnniversaryType.birthday) {
+      birthdayCsv = PriestCsvParser.updateBirthdayRow(
+        birthdayCsv,
+        originalKey,
+        name: updated.fullName,
+        designation: updated.designation,
+        servingAt: updated.servingAt,
+        address: updated.address,
+        birthDate: updated.birthDate,
+      );
+    } else {
+      ordinationCsv = PriestCsvParser.updateOrdinationRow(
+        ordinationCsv,
+        originalKey,
+        name: updated.fullName,
+        designation: updated.designation,
+        servingAt: updated.servingAt,
+        address: updated.address,
+        ordinationDate: updated.ordinationDate,
+      );
+    }
+
+    await _writeCache(birthdayCsv, ordinationCsv);
   }
 
   PriestRecord? findByKey(String key) {
