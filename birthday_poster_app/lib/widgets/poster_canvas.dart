@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../models/poster_data.dart';
+import '../services/background_dimensions.dart';
 import '../theme/app_theme.dart';
 import '../utils/poster_text_fitter.dart';
 
@@ -48,8 +49,9 @@ class PosterCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = width / aspectRatio;
+        final size = fitPosterSize(constraints, aspectRatio);
+        final width = size.width;
+        final height = size.height;
         final layout = PosterLayout(width, height);
 
         return SizedBox(
