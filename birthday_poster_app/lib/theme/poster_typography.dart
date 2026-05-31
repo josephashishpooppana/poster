@@ -4,9 +4,9 @@ import 'app_theme.dart';
 
 /// Bundled poster fonts (offline — no network fetch).
 abstract final class PosterTypography {
-  static const montserrat = 'Montserrat';
+  static const montserratFamily = 'Montserrat';
   static const barlowCondensed = 'Barlow Condensed';
-  static const greatVibes = 'Great Vibes';
+  static const greatVibesFamily = 'Great Vibes';
 
   static TextStyle barlowCondensedDate({
     required double fontSize,
@@ -30,7 +30,7 @@ abstract final class PosterTypography {
     double letterSpacing = 0,
   }) {
     return TextStyle(
-      fontFamily: montserrat,
+      fontFamily: montserratFamily,
       fontWeight: weight,
       fontSize: fontSize,
       height: height,
@@ -44,7 +44,7 @@ abstract final class PosterTypography {
     Color color = AppColors.nameDark,
   }) {
     return TextStyle(
-      fontFamily: greatVibes,
+      fontFamily: greatVibesFamily,
       fontSize: fontSize,
       height: 1.2,
       color: color,
