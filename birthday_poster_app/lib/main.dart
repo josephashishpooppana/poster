@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/menu_screen.dart';
+import 'services/poster_fonts.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -11,6 +12,7 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+  PosterFonts.ensureLoaded();
   runApp(const PosterApp());
 }
 
