@@ -6,6 +6,23 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/poster_data.dart';
 import '../theme/app_theme.dart';
 
+/// Poster template is 1280×1600 (4∶5). All overlay positions match index.html CSS
+/// percentages: horizontal values use poster width, vertical values use height.
+class PosterLayout {
+  const PosterLayout(this.width, this.height);
+
+  final double width;
+  final double height;
+
+  static const templateAspectRatio = 1280 / 1600;
+
+  /// Matches HTML `font-size: width / 48` on `.poster`.
+  double get em => width / 48;
+
+  double xPct(double percent) => width * percent / 100;
+  double yPct(double percent) => height * percent / 100;
+}
+
 class PosterCanvas extends StatelessWidget {
   const PosterCanvas({
     super.key,
@@ -23,18 +40,19 @@ class PosterCanvas extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final unit = width / 48;
+        final height = width / PosterLayout.templateAspectRatio;
+        final layout = PosterLayout(width, height);
 
-        return AspectRatio(
-          aspectRatio: 4 / 5,
-          child: Container(
+        return SizedBox(
+          width: width,
+          height: height,
+          child: DecoratedBox(
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F0),
               image: DecorationImage(
                 image: customBackground ??
                     const AssetImage('assets/poster_background.jpeg'),
                 fit: BoxFit.fill,
-                onError: (_, __) {},
               ),
               boxShadow: [
                 BoxShadow(
@@ -47,10 +65,14 @@ class PosterCanvas extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _DateBadge(parsed: data.parsedDate, unit: unit),
-                _PhotoFrame(unit: unit, photoBytes: photoBytes, data: data),
-                _NameBlock(data: data, unit: unit),
-                _RolesBlock(data: data, unit: unit),
+                _DateBadge(parsed: data.parsedDate, layout: layout),
+                _PhotoFrame(
+                  layout: layout,
+                  photoBytes: photoBytes,
+                  data: data,
+                ),
+                _NameBlock(data: data, layout: layout),
+                _RolesBlock(data: data, layout: layout),
               ],
             ),
           ),
@@ -61,31 +83,37 @@ class PosterCanvas extends StatelessWidget {
 }
 
 class _DateBadge extends StatelessWidget {
-  const _DateBadge({required this.parsed, required this.unit});
+  const _DateBadge({required this.parsed, required this.layout});
 
   final ({String month, String day}) parsed;
-  final double unit;
+  final PosterLayout layout;
 
   @override
   Widget build(BuildContext context) {
     final textStyle = GoogleFonts.barlowCondensed(
       fontWeight: FontWeight.w800,
-      fontSize: unit * 3.4,
+      fontSize: layout.em * 3.4,
       height: 1,
       letterSpacing: 0.5,
       color: AppColors.dateText,
     );
 
     return Positioned(
-      left: unit * 0.29,
-      top: unit * 2.4,
+      left: layout.xPct(0.6),
+      top: layout.yPct(5.0),
       child: Container(
-        padding: EdgeInsets.fromLTRB(unit * 0.25, unit * 0.2, unit * 0.43, unit * 0.18),
+        constraints: BoxConstraints(maxWidth: layout.xPct(28)),
+        padding: EdgeInsets.fromLTRB(
+          layout.em * 0.52,
+          layout.em * 0.42,
+          layout.em * 0.9,
+          layout.em * 0.38,
+        ),
         decoration: BoxDecoration(
           color: AppColors.dateBadge,
           borderRadius: BorderRadius.only(
-            topRight: Radius.circular(unit * 0.55),
-            bottomRight: Radius.circular(unit * 0.55),
+            topRight: Radius.circular(layout.em * 0.55),
+            bottomRight: Radius.circular(layout.em * 0.55),
           ),
           boxShadow: [
             BoxShadow(
@@ -100,7 +128,7 @@ class _DateBadge extends StatelessWidget {
           children: [
             Text(parsed.month, style: textStyle),
             if (parsed.day.isNotEmpty) ...[
-              SizedBox(width: unit * 0.33),
+              SizedBox(width: layout.em * 0.68),
               Text(parsed.day, style: textStyle),
             ],
           ],
@@ -112,69 +140,52 @@ class _DateBadge extends StatelessWidget {
 
 class _PhotoFrame extends StatelessWidget {
   const _PhotoFrame({
-    required this.unit,
+    required this.layout,
     required this.photoBytes,
     required this.data,
   });
 
-  final double unit;
+  final PosterLayout layout;
   final Uint8List? photoBytes;
   final PosterData data;
 
   @override
   Widget build(BuildContext context) {
-    final left = unit * 3.36;
-    final top = unit * 17.57;
-    final width = unit * 19.44;
-    final height = unit * 19.1;
-    final innerRadius = unit * 2.4;
-    final borderRadius = unit * 2.8;
+    if (photoBytes == null) return const SizedBox.shrink();
+
+    final borderWidth = layout.em * 0.4;
+    final cardRadius = layout.em * 2.8;
+    final photoRadius = layout.em * 2.4;
 
     return Stack(
       children: [
         Positioned(
-          left: left - unit * 0.19,
-          top: top - unit * 0.19,
-          width: width + unit * 0.38,
-          height: height + unit * 0.38,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: unit * 0.38),
-              borderRadius: BorderRadius.circular(borderRadius),
+          left: layout.xPct(7.0),
+          top: layout.yPct(36.6),
+          width: layout.xPct(40.5),
+          height: layout.yPct(39.8),
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: borderWidth),
+                borderRadius: BorderRadius.circular(cardRadius),
+              ),
             ),
           ),
         ),
         Positioned(
-          left: left,
-          top: top,
-          width: width,
-          height: height,
+          left: layout.xPct(7.4),
+          top: layout.yPct(37.0),
+          width: layout.xPct(39.7),
+          height: layout.yPct(39.0),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(innerRadius),
-            child: photoBytes == null
-                ? ColoredBox(
-                    color: const Color(0xFFE1E7E4),
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(unit * 0.5),
-                        child: Text(
-                          'Add a portrait photo',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            fontWeight: FontWeight.w600,
-                            fontSize: unit * 1.1,
-                            color: const Color(0xFF55726B),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : _PositionedPhoto(
-                    bytes: photoBytes!,
-                    posX: data.photoPosX,
-                    posY: data.photoPosY,
-                    zoom: data.photoZoom,
-                  ),
+            borderRadius: BorderRadius.circular(photoRadius),
+            child: _PositionedPhoto(
+              bytes: photoBytes!,
+              posX: data.photoPosX,
+              posY: data.photoPosY,
+              zoom: data.photoZoom,
+            ),
           ),
         ),
       ],
@@ -202,24 +213,18 @@ class _PositionedPhoto extends StatelessWidget {
       2 * (posY / 100) - 1,
     );
     final scale = zoom / 100;
+    final imageScale = scale <= 0 ? 1.0 : (scale < 1 ? 1 / scale : scale);
 
-    return ClipRect(
-      child: OverflowBox(
+    return SizedBox.expand(
+      child: Transform.scale(
+        scale: imageScale,
         alignment: alignment,
-        minWidth: 0,
-        minHeight: 0,
-        maxWidth: double.infinity,
-        maxHeight: double.infinity,
-        child: Transform.scale(
-          scale: scale <= 0 ? 1 : (scale < 1 ? 1 / scale : scale),
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.cover,
           alignment: alignment,
-          child: Image.memory(
-            bytes,
-            fit: BoxFit.cover,
-            alignment: alignment,
-            width: double.infinity,
-            height: double.infinity,
-          ),
+          width: double.infinity,
+          height: double.infinity,
         ),
       ),
     );
@@ -227,50 +232,56 @@ class _PositionedPhoto extends StatelessWidget {
 }
 
 class _NameBlock extends StatelessWidget {
-  const _NameBlock({required this.data, required this.unit});
+  const _NameBlock({required this.data, required this.layout});
 
   final PosterData data;
-  final double unit;
+  final PosterLayout layout;
 
   @override
   Widget build(BuildContext context) {
+    final blockWidth = layout.xPct(44);
+
     return Positioned(
-      left: unit * 24.96,
-      top: unit * 20.35,
-      width: unit * 21.12,
+      left: layout.xPct(52.0),
+      top: layout.yPct(42.4),
+      width: blockWidth,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _FitText(
+          _AutoFitText(
             text: data.designation.trim().isEmpty ? ' ' : data.designation.trim(),
+            maxWidth: blockWidth,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w500,
-              fontSize: unit * 1.85,
+              fontSize: layout.em * 1.85,
               height: 1.2,
               color: const Color(0xFF0D2F29),
             ),
           ),
-          _FitText(
+          SizedBox(height: layout.em * 0.25),
+          _AutoFitText(
             text: data.givenName.trim().isEmpty ? ' ' : data.givenName.trim().toUpperCase(),
+            maxWidth: blockWidth,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w900,
-              fontSize: unit * 2.85,
+              fontSize: layout.em * 2.85,
               height: 1.05,
               letterSpacing: 0.3,
               color: AppColors.nameDark,
             ),
           ),
-          Transform.translate(
-            offset: Offset(
-              unit * 21.12 * (data.familyOffsetX / 100),
-              unit * data.familyOffsetY,
+          Padding(
+            padding: EdgeInsets.only(
+              left: blockWidth * (data.familyOffsetX / 100),
+              top: layout.em * data.familyOffsetY,
             ),
             child: SizedBox(
-              width: unit * 21.12 * 0.68,
-              child: _FitText(
+              width: blockWidth * 0.68,
+              child: _AutoFitText(
                 text: data.familyName.trim().isEmpty ? ' ' : data.familyName.trim(),
+                maxWidth: blockWidth * 0.68,
                 style: GoogleFonts.greatVibes(
-                  fontSize: unit * data.familyFontSize,
+                  fontSize: layout.em * data.familyFontSize,
                   height: 1.2,
                   color: AppColors.nameDark,
                 ),
@@ -284,10 +295,10 @@ class _NameBlock extends StatelessWidget {
 }
 
 class _RolesBlock extends StatelessWidget {
-  const _RolesBlock({required this.data, required this.unit});
+  const _RolesBlock({required this.data, required this.layout});
 
   final PosterData data;
-  final double unit;
+  final PosterLayout layout;
 
   @override
   Widget build(BuildContext context) {
@@ -295,6 +306,9 @@ class _RolesBlock extends StatelessWidget {
     if (positions.isEmpty) return const SizedBox.shrink();
 
     final scale = data.roleScaleForCount(positions.length) * data.rolesTextScale;
+    final boxWidth = layout.xPct(data.rolesWidth);
+    final boxHeight = layout.yPct(data.rolesHeight);
+
     final mainAlign = switch (data.rolesAlign) {
       RolesVerticalAlign.top => MainAxisAlignment.start,
       RolesVerticalAlign.center => MainAxisAlignment.center,
@@ -302,19 +316,29 @@ class _RolesBlock extends StatelessWidget {
     };
 
     return Positioned(
-      left: unit * 48 * (data.rolesLeft / 100),
-      top: unit * 48 * (data.rolesTop / 100),
-      width: unit * 48 * (data.rolesWidth / 100),
-      height: unit * 48 * (data.rolesHeight / 100),
+      left: layout.xPct(data.rolesLeft),
+      top: layout.yPct(data.rolesTop),
+      width: boxWidth,
+      height: boxHeight,
       child: Padding(
-        padding: EdgeInsets.only(bottom: unit * data.rolesPadBottom),
+        padding: EdgeInsets.fromLTRB(
+          layout.em * 0,
+          layout.em * 0.35,
+          layout.em * 0.15,
+          layout.em * data.rolesPadBottom,
+        ),
         child: Column(
           mainAxisAlignment: mainAlign,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final pos in positions) ...[
-              _RoleEntry(position: pos, unit: unit, scale: scale),
-              SizedBox(height: unit * 0.28),
+            for (var i = 0; i < positions.length; i++) ...[
+              if (i > 0) SizedBox(height: layout.em * 0.28),
+              _RoleEntry(
+                position: positions[i],
+                layout: layout,
+                scale: scale,
+                maxWidth: boxWidth,
+              ),
             ],
           ],
         ),
@@ -326,13 +350,15 @@ class _RolesBlock extends StatelessWidget {
 class _RoleEntry extends StatelessWidget {
   const _RoleEntry({
     required this.position,
-    required this.unit,
+    required this.layout,
     required this.scale,
+    required this.maxWidth,
   });
 
   final ChurchPosition position;
-  final double unit;
+  final PosterLayout layout;
   final double scale;
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -340,21 +366,23 @@ class _RoleEntry extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (position.title.trim().isNotEmpty)
-          _FitText(
+          _AutoFitText(
             text: position.title.trim(),
+            maxWidth: maxWidth,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w800,
-              fontSize: unit * 1.22 * scale * 1.05,
+              fontSize: layout.em * 1.22 * scale * 1.05,
               height: 1.15,
               color: const Color(0xFF072922),
             ),
           ),
         if (position.location.trim().isNotEmpty)
-          _FitText(
+          _AutoFitText(
             text: position.location.trim(),
+            maxWidth: maxWidth,
             style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w500,
-              fontSize: unit * 1.05 * scale * 1.05,
+              fontSize: layout.em * 1.05 * scale * 1.05,
               height: 1.25,
               color: AppColors.roleMuted,
             ),
@@ -364,18 +392,31 @@ class _RoleEntry extends StatelessWidget {
   }
 }
 
-class _FitText extends StatelessWidget {
-  const _FitText({required this.text, required this.style});
+class _AutoFitText extends StatelessWidget {
+  const _AutoFitText({
+    required this.text,
+    required this.maxWidth,
+    required this.style,
+  });
 
   final String text;
+  final double maxWidth;
   final TextStyle style;
 
   @override
   Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Text(text, style: style, maxLines: 1),
+    return SizedBox(
+      width: maxWidth,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: style,
+          maxLines: 1,
+          softWrap: false,
+        ),
+      ),
     );
   }
 }
