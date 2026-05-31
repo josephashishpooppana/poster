@@ -2,11 +2,11 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../models/poster_data.dart';
 import '../services/background_dimensions.dart';
 import '../theme/app_theme.dart';
+import '../theme/poster_typography.dart';
 import '../utils/poster_text_fitter.dart';
 
 /// All overlay positions match index.html CSS percentages: horizontal values
@@ -102,48 +102,52 @@ class _DateBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = GoogleFonts.barlowCondensed(
-      fontWeight: FontWeight.w800,
+    final textStyle = PosterTypography.barlowCondensedDate(
       fontSize: layout.em * 3.4,
-      height: 1,
       letterSpacing: layout.em * 0.03,
-      color: AppColors.dateText,
     );
+    final month = parsed.month.toUpperCase();
+    final day = parsed.day.toUpperCase();
 
     return Positioned(
       left: layout.xPct(0.6),
       top: layout.yPct(5.0),
-      child: Container(
+      child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: layout.xPct(28)),
-        padding: EdgeInsets.fromLTRB(
-          layout.em * 0.52,
-          layout.em * 0.42,
-          layout.em * 0.9,
-          layout.em * 0.38,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.dateBadge,
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(layout.em * 0.55),
-            bottomRight: Radius.circular(layout.em * 0.55),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.dateBadge,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(layout.em * 0.55),
+              bottomRight: Radius.circular(layout.em * 0.55),
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(parsed.month, style: textStyle),
-            if (parsed.day.isNotEmpty) ...[
-              SizedBox(width: layout.em * 0.68),
-              Text(parsed.day, style: textStyle),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
             ],
-          ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              layout.em * 0.52,
+              layout.em * 0.42,
+              layout.em * 0.9,
+              layout.em * 0.38,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(month, style: textStyle),
+                if (day.isNotEmpty) ...[
+                  SizedBox(width: layout.em * 0.68),
+                  Text(day, style: textStyle),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -161,13 +165,13 @@ class _PhotoFrame extends StatelessWidget {
   final Uint8List? photoBytes;
   final PosterData data;
 
-  static const _borderWidth = 4.0;
-  static const _cardRadius = 28.0;
-  static const _photoRadius = 24.0;
-
   @override
   Widget build(BuildContext context) {
     if (photoBytes == null) return const SizedBox.shrink();
+
+    final borderWidth = scaledCssPx(layout.width, 4);
+    final cardRadius = scaledCssPx(layout.width, 28);
+    final photoRadius = scaledCssPx(layout.width, 24);
 
     return Stack(
       children: [
@@ -179,8 +183,8 @@ class _PhotoFrame extends StatelessWidget {
           child: IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: _borderWidth),
-                borderRadius: BorderRadius.circular(_cardRadius),
+                border: Border.all(color: Colors.white, width: borderWidth),
+                borderRadius: BorderRadius.circular(cardRadius),
               ),
             ),
           ),
@@ -191,7 +195,8 @@ class _PhotoFrame extends StatelessWidget {
           width: layout.xPct(39.7),
           height: layout.yPct(39.0),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(_photoRadius),
+            borderRadius: BorderRadius.circular(photoRadius),
+            clipBehavior: Clip.antiAlias,
             child: _PositionedPhoto(
               bytes: photoBytes!,
               posX: data.photoPosX,
@@ -262,31 +267,39 @@ class _PositionedPhotoState extends State<_PositionedPhoto> {
       2 * (widget.posY / 100) - 1,
     );
 
-    if (_imageSize == null) {
-      return ColoredBox(
-        color: const Color(0xFFE1E7E4),
-        child: Image.memory(
-          widget.bytes,
-          fit: BoxFit.cover,
-          alignment: alignment,
-          width: double.infinity,
-          height: double.infinity,
-        ),
-      );
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final cw = constraints.maxWidth;
         final ch = constraints.maxHeight;
 
-        if (widget.zoom == 100) {
-          return Image.memory(
-            widget.bytes,
-            fit: BoxFit.cover,
-            alignment: alignment,
+        if (_imageSize == null) {
+          return SizedBox(
             width: cw,
             height: ch,
+            child: ColoredBox(
+              color: const Color(0xFFE1E7E4),
+              child: Image.memory(
+                widget.bytes,
+                fit: BoxFit.cover,
+                alignment: alignment,
+                width: cw,
+                height: ch,
+              ),
+            ),
+          );
+        }
+
+        if (widget.zoom == 100) {
+          return SizedBox(
+            width: cw,
+            height: ch,
+            child: Image.memory(
+              widget.bytes,
+              fit: BoxFit.cover,
+              alignment: alignment,
+              width: cw,
+              height: ch,
+            ),
           );
         }
 
@@ -297,22 +310,26 @@ class _PositionedPhotoState extends State<_PositionedPhoto> {
         final left = (widget.posX / 100) * (cw - imgW);
         final top = (widget.posY / 100) * (ch - imgH);
 
-        return Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            Positioned(
-              left: left,
-              top: top,
-              width: imgW,
-              height: imgH,
-              child: Image.memory(
-                widget.bytes,
-                fit: BoxFit.fill,
+        return SizedBox(
+          width: cw,
+          height: ch,
+          child: Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              Positioned(
+                left: left,
+                top: top,
                 width: imgW,
                 height: imgH,
+                child: Image.memory(
+                  widget.bytes,
+                  fit: BoxFit.fill,
+                  width: imgW,
+                  height: imgH,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -338,23 +355,21 @@ class _NameBlock extends StatelessWidget {
     final familyText =
         data.familyName.trim().isEmpty ? ' ' : data.familyName.trim();
 
-    final designationStyle = GoogleFonts.montserrat(
-      fontWeight: FontWeight.w500,
+    final designationStyle = PosterTypography.montserrat(
+      weight: FontWeight.w500,
       fontSize: layout.em * 1.85,
       height: 1.2,
       color: const Color(0xFF0D2F29),
     );
-    final givenStyle = GoogleFonts.montserrat(
-      fontWeight: FontWeight.w900,
+    final givenStyle = PosterTypography.montserrat(
+      weight: FontWeight.w900,
       fontSize: layout.em * 2.85,
       height: 1.05,
       letterSpacing: layout.em * 0.02,
       color: AppColors.nameDark,
     );
-    final familyStyle = GoogleFonts.greatVibes(
+    final familyStyle = PosterTypography.greatVibes(
       fontSize: layout.em * data.familyFontSize,
-      height: 1.2,
-      color: AppColors.nameDark,
     );
 
     final fit = PosterTextFitter.fitNameBlock(
@@ -450,15 +465,15 @@ class _RolesBlock extends StatelessWidget {
 
     TextStyle styleFor(double fontSize, {required bool isTitle}) {
       if (isTitle) {
-        return GoogleFonts.montserrat(
-          fontWeight: FontWeight.w800,
+        return PosterTypography.montserrat(
+          weight: FontWeight.w800,
           fontSize: fontSize,
           height: 1.15,
           color: const Color(0xFF072922),
         );
       }
-      return GoogleFonts.montserrat(
-        fontWeight: FontWeight.w500,
+      return PosterTypography.montserrat(
+        weight: FontWeight.w500,
         fontSize: fontSize,
         height: 1.25,
         color: AppColors.roleMuted,
