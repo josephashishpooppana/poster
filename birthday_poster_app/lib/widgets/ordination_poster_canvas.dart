@@ -9,6 +9,29 @@ import '../theme/app_theme.dart';
 import '../theme/poster_typography.dart';
 import '../utils/poster_text_fitter.dart';
 
+/// Measured overlay positions for the 1122×1402 ordination template.
+abstract final class OrdinationLayoutConstants {
+  static const dateLeft = 2.4;
+  static const dateTop = 3.6;
+
+  static const photoLeft = 12.8;
+  static const photoTop = 29.8;
+  static const photoWidth = 31.5;
+  static const photoHeight = 21.5;
+
+  static const infoLeft = 50.2;
+  static const infoTop = 29.6;
+  static const infoWidth = 35.5;
+  static const infoMaxHeight = 14.0;
+
+  static const designationEm = 1.55;
+  static const givenEm = 2.35;
+  static const roleTitleEm = 1.05;
+  static const roleLocationEm = 0.95;
+  static const nameRoleGapEm = 0.9;
+  static const nameLineGapEm = 0.12;
+}
+
 class OrdinationPosterLayout {
   const OrdinationPosterLayout(this.width, this.height);
 
@@ -80,8 +103,7 @@ class OrdinationPosterCanvas extends StatelessWidget {
                   photoBytes: photoBytes,
                   data: data,
                 ),
-                _OrdinationNameBlock(data: data, layout: layout),
-                _OrdinationRolesBlock(data: data, layout: layout),
+                _OrdinationGoldenPanel(data: data, layout: layout),
               ],
             ),
           ),
@@ -107,8 +129,8 @@ class _OrdinationDateBadge extends StatelessWidget {
     final day = parsed.day.toUpperCase();
 
     return Positioned(
-      left: layout.xPct(2.8),
-      top: layout.yPct(4.2),
+      left: layout.xPct(OrdinationLayoutConstants.dateLeft),
+      top: layout.yPct(OrdinationLayoutConstants.dateTop),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: layout.xPct(28)),
         child: DecoratedBox(
@@ -166,13 +188,13 @@ class _OrdinationPhotoFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     if (photoBytes == null) return const SizedBox.shrink();
 
-    final photoRadius = scaledCssPx(layout.width, 22);
+    final photoRadius = scaledCssPx(layout.width, 18);
 
     return Positioned(
-      left: layout.xPct(9.2),
-      top: layout.yPct(30.0),
-      width: layout.xPct(33.5),
-      height: layout.yPct(26.5),
+      left: layout.xPct(OrdinationLayoutConstants.photoLeft),
+      top: layout.yPct(OrdinationLayoutConstants.photoTop),
+      width: layout.xPct(OrdinationLayoutConstants.photoWidth),
+      height: layout.yPct(OrdinationLayoutConstants.photoHeight),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(photoRadius),
         clipBehavior: Clip.antiAlias,
@@ -310,18 +332,17 @@ class _OrdinationPositionedPhotoState extends State<_OrdinationPositionedPhoto> 
   }
 }
 
-class _OrdinationNameBlock extends StatelessWidget {
-  const _OrdinationNameBlock({required this.data, required this.layout});
+class _OrdinationGoldenPanel extends StatelessWidget {
+  const _OrdinationGoldenPanel({required this.data, required this.layout});
 
   final PosterData data;
   final OrdinationPosterLayout layout;
 
   @override
   Widget build(BuildContext context) {
-    const blockLeftPct = 48.5;
-    const blockTopPct = 30.8;
-    final blockWidth = layout.xPct(40);
-    final blockLeft = layout.xPct(blockLeftPct);
+    final blockLeft = layout.xPct(OrdinationLayoutConstants.infoLeft);
+    final blockTop = layout.yPct(OrdinationLayoutConstants.infoTop);
+    final blockWidth = layout.xPct(OrdinationLayoutConstants.infoWidth);
     final familyWidth = blockWidth * 0.72;
 
     final designationText =
@@ -333,13 +354,13 @@ class _OrdinationNameBlock extends StatelessWidget {
 
     final designationStyle = PosterTypography.montserrat(
       weight: FontWeight.w600,
-      fontSize: layout.em * 1.65,
+      fontSize: layout.em * OrdinationLayoutConstants.designationEm,
       height: 1.2,
       color: AppColors.ordinationNameDark,
     );
     final givenStyle = PosterTypography.montserrat(
       weight: FontWeight.w900,
-      fontSize: layout.em * 2.55,
+      fontSize: layout.em * OrdinationLayoutConstants.givenEm,
       height: 1.05,
       letterSpacing: layout.em * 0.015,
       color: AppColors.ordinationNameDark,
@@ -349,7 +370,7 @@ class _OrdinationNameBlock extends StatelessWidget {
       color: AppColors.ordinationNameDark,
     );
 
-    final fit = PosterTextFitter.fitNameBlock(
+    final nameFit = PosterTextFitter.fitNameBlock(
       designation: designationText,
       given: givenText,
       family: familyText,
@@ -364,72 +385,9 @@ class _OrdinationNameBlock extends StatelessWidget {
       posterWidth: layout.width,
     );
 
-    return Positioned(
-      left: blockLeft,
-      top: layout.yPct(blockTopPct),
-      width: blockWidth,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            designationText,
-            style: designationStyle.copyWith(fontSize: fit.designationSize),
-            maxLines: 1,
-            softWrap: false,
-          ),
-          SizedBox(height: layout.em * 0.15),
-          Text(
-            givenText,
-            style: givenStyle.copyWith(fontSize: fit.givenSize),
-            maxLines: 1,
-            softWrap: false,
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              left: blockWidth * (data.familyOffsetX / 100),
-              top: layout.em * data.familyOffsetY,
-            ),
-            child: SizedBox(
-              width: familyWidth,
-              child: Text(
-                familyText,
-                style: familyStyle.copyWith(fontSize: fit.familySize),
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.visible,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrdinationRolesBlock extends StatelessWidget {
-  const _OrdinationRolesBlock({required this.data, required this.layout});
-
-  final PosterData data;
-  final OrdinationPosterLayout layout;
-
-  @override
-  Widget build(BuildContext context) {
     final positions = data.visiblePositions;
-    if (positions.isEmpty) return const SizedBox.shrink();
-
-    final boxWidth = layout.xPct(data.rolesWidth);
-    final boxHeight = layout.yPct(data.rolesHeight);
-    final boxTop = layout.yPct(data.rolesTop);
-    final initialScale =
-        data.roleScaleForCount(positions.length) * data.rolesTextScale;
-
     final entries = positions
-        .map(
-          (p) => (
-            title: p.title.trim(),
-            location: p.location.trim(),
-          ),
-        )
+        .map((p) => (title: p.title.trim(), location: p.location.trim()))
         .toList();
 
     TextStyle styleFor(double fontSize, {required bool isTitle}) {
@@ -449,54 +407,134 @@ class _OrdinationRolesBlock extends StatelessWidget {
       );
     }
 
-    final fit = PosterTextFitter.fitRolesBlock(
-      entries: entries,
-      em: layout.em,
-      initialScale: initialScale,
-      boxWidth: boxWidth,
-      boxHeight: boxHeight,
-      boxTop: boxTop,
-      posterHeight: layout.height,
-      styleFor: styleFor,
-    );
+    RolesFitResult? rolesFit;
+    if (entries.isNotEmpty) {
+      final nameColumnHeight = _estimateNameColumnHeight(
+        layout: layout,
+        designationText: designationText,
+        givenText: givenText,
+        familyText: familyText,
+        nameFit: nameFit,
+        designationStyle: designationStyle,
+        givenStyle: givenStyle,
+        familyStyle: familyStyle,
+        blockWidth: blockWidth,
+        familyWidth: familyWidth,
+      );
 
-    final mainAlign = switch (data.rolesAlign) {
-      RolesVerticalAlign.top => MainAxisAlignment.start,
-      RolesVerticalAlign.center => MainAxisAlignment.center,
-      RolesVerticalAlign.bottom => MainAxisAlignment.end,
-    };
+      final rolesBoxTop = blockTop + nameColumnHeight + layout.em * OrdinationLayoutConstants.nameRoleGapEm;
+      final rolesBoxHeight = layout.yPct(OrdinationLayoutConstants.infoMaxHeight);
+      final initialScale =
+          data.roleScaleForCount(entries.length) * data.rolesTextScale;
+
+      rolesFit = PosterTextFitter.fitRolesBlock(
+        entries: entries,
+        em: layout.em,
+        initialScale: initialScale,
+        boxWidth: blockWidth * (data.rolesWidth / OrdinationLayoutConstants.infoWidth),
+        boxHeight: rolesBoxHeight,
+        boxTop: rolesBoxTop,
+        posterHeight: layout.height,
+        styleFor: styleFor,
+      );
+    }
 
     return Positioned(
-      left: layout.xPct(data.rolesLeft),
-      top: boxTop,
-      width: boxWidth,
-      height: boxHeight,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          0,
-          layout.em * 0.15,
-          layout.em * 0.1,
-          layout.em * data.rolesPadBottom,
-        ),
-        child: Column(
-          mainAxisAlignment: mainAlign,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      left: blockLeft,
+      top: blockTop,
+      width: blockWidth,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            designationText,
+            style: designationStyle.copyWith(fontSize: nameFit.designationSize),
+            maxLines: 1,
+            softWrap: false,
+          ),
+          SizedBox(height: layout.em * OrdinationLayoutConstants.nameLineGapEm),
+          Text(
+            givenText,
+            style: givenStyle.copyWith(fontSize: nameFit.givenSize),
+            maxLines: 1,
+            softWrap: false,
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: blockWidth * (data.familyOffsetX / 100),
+              top: layout.em * data.familyOffsetY,
+            ),
+            child: SizedBox(
+              width: familyWidth,
+              child: Text(
+                familyText,
+                style: familyStyle.copyWith(fontSize: nameFit.familySize),
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ),
+          if (entries.isNotEmpty && rolesFit != null) ...[
+            SizedBox(height: layout.em * OrdinationLayoutConstants.nameRoleGapEm),
             for (var i = 0; i < entries.length; i++) ...[
               if (i > 0) SizedBox(height: layout.em * 0.22),
               _OrdinationRoleEntry(
                 title: entries[i].title,
                 location: entries[i].location,
-                titleSize: fit.titleSizes[i],
-                locationSize: fit.locationSizes[i],
+                titleSize: rolesFit.titleSizes[i],
+                locationSize: rolesFit.locationSizes[i],
                 entryGap: layout.em * 0.06,
                 styleFor: styleFor,
               ),
             ],
           ],
-        ),
+        ],
       ),
     );
+  }
+
+  double _estimateNameColumnHeight({
+    required OrdinationPosterLayout layout,
+    required String designationText,
+    required String givenText,
+    required String familyText,
+    required NameFitResult nameFit,
+    required TextStyle designationStyle,
+    required TextStyle givenStyle,
+    required TextStyle familyStyle,
+    required double blockWidth,
+    required double familyWidth,
+  }) {
+    var height = 0.0;
+
+    void addLine(String text, TextStyle style, double size) {
+      if (text.trim().isEmpty) return;
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style.copyWith(fontSize: size)),
+        maxLines: 1,
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: blockWidth);
+      height += painter.height;
+    }
+
+    addLine(designationText, designationStyle, nameFit.designationSize);
+    height += layout.em * OrdinationLayoutConstants.nameLineGapEm;
+    addLine(givenText, givenStyle, nameFit.givenSize);
+    height += layout.em * data.familyOffsetY;
+    if (familyText.trim().isNotEmpty) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: familyText,
+          style: familyStyle.copyWith(fontSize: nameFit.familySize),
+        ),
+        maxLines: 1,
+        textDirection: ui.TextDirection.ltr,
+      )..layout(maxWidth: familyWidth);
+      height += painter.height;
+    }
+
+    return height;
   }
 }
 
