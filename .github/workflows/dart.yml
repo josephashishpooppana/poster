@@ -38,7 +38,7 @@ jobs:
           rm -f android/app/build.gradle.kts
           rm -f android/build.gradle.kts
           rm -f android/settings.gradle.kts
-          git checkout -- android/settings.gradle android/app/build.gradle android/build.gradle android/gradle.properties android/gradle/wrapper/gradle-wrapper.properties
+          git checkout -- android/settings.gradle android/app/build.gradle android/build.gradle android/gradle.properties android/gradle/wrapper/gradle-wrapper.properties test/widget_test.dart
           cp android/notification_manifest.xml android/app/src/main/AndroidManifest.xml
 
       - name: Install dependencies
