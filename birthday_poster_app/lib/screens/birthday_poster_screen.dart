@@ -12,14 +12,21 @@ import '../widgets/editor_form.dart';
 import '../widgets/poster_canvas.dart';
 
 class BirthdayPosterScreen extends StatefulWidget {
-  const BirthdayPosterScreen({super.key});
+  const BirthdayPosterScreen({
+    super.key,
+    this.initialData,
+    this.screenTitle = 'Birthday Poster',
+  });
+
+  final PosterData? initialData;
+  final String screenTitle;
 
   @override
   State<BirthdayPosterScreen> createState() => _BirthdayPosterScreenState();
 }
 
 class _BirthdayPosterScreenState extends State<BirthdayPosterScreen> {
-  final _data = PosterData();
+  late final PosterData _data;
   Uint8List? _photoBytes;
   ImageProvider? _background;
   String _status = '';
@@ -30,6 +37,41 @@ class _BirthdayPosterScreenState extends State<BirthdayPosterScreen> {
 
   ImageProvider get _backgroundImage =>
       _background ?? const AssetImage('assets/poster_background.jpeg');
+
+  @override
+  void initState() {
+    super.initState();
+    _data = _clonePosterData(widget.initialData ?? PosterData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkBackgroundAsset();
+      _resolveBackgroundDimensions(_backgroundImage);
+    });
+  }
+
+  PosterData _clonePosterData(PosterData source) {
+    return PosterData(
+      dateText: source.dateText,
+      designation: source.designation,
+      givenName: source.givenName,
+      familyName: source.familyName,
+      familyOffsetX: source.familyOffsetX,
+      familyOffsetY: source.familyOffsetY,
+      familyFontSize: source.familyFontSize,
+      photoPosX: source.photoPosX,
+      photoPosY: source.photoPosY,
+      photoZoom: source.photoZoom,
+      rolesLeft: source.rolesLeft,
+      rolesTop: source.rolesTop,
+      rolesWidth: source.rolesWidth,
+      rolesHeight: source.rolesHeight,
+      rolesPadBottom: source.rolesPadBottom,
+      rolesAlign: source.rolesAlign,
+      rolesTextScale: source.rolesTextScale,
+      positions: source.positions
+          .map((position) => position.copyWith())
+          .toList(),
+    );
+  }
 
   void _refresh() => setState(() {});
 
@@ -99,15 +141,6 @@ class _BirthdayPosterScreenState extends State<BirthdayPosterScreen> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkBackgroundAsset();
-      _resolveBackgroundDimensions(_backgroundImage);
-    });
-  }
-
   Future<void> _checkBackgroundAsset() async {
     try {
       await DefaultAssetBundle.of(context)
@@ -128,7 +161,7 @@ class _BirthdayPosterScreenState extends State<BirthdayPosterScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Birthday Poster'),
+        title: Text(widget.screenTitle),
         actions: [
           if (_bgMissing)
             TextButton.icon(

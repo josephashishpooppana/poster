@@ -1,11 +1,62 @@
 import 'package:flutter/material.dart';
 
+import '../models/anniversary_event.dart';
 import '../models/poster_menu_item.dart';
+import '../services/priest_repository.dart';
+import '../services/reminder_store.dart';
 import '../theme/app_theme.dart';
+import '../widgets/anniversary_reminder_banner.dart';
 import 'birthday_poster_screen.dart';
+import 'ordination_poster_screen.dart';
 
-class MenuScreen extends StatelessWidget {
+class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {
+  List<AnniversaryEvent> _pendingEvents = [];
+  bool _loadingReminders = true;
+
+  @override
+  void initState() {
+    super.initState();
+    ReminderStore.instance.addListener(_loadReminders);
+    _loadReminders();
+  }
+
+  @override
+  void dispose() {
+    ReminderStore.instance.removeListener(_loadReminders);
+    super.dispose();
+  }
+
+  Future<void> _loadReminders() async {
+    await ReminderStore.instance.resetDayIfNeeded();
+    final todayEvents = PriestRepository.instance.eventsOn(DateTime.now());
+    final handled = await ReminderStore.instance.handledIds();
+    if (!mounted) return;
+    setState(() {
+      _pendingEvents =
+          todayEvents.where((event) => !handled.contains(event.id)).toList();
+      _loadingReminders = false;
+    });
+  }
+
+  Future<void> _openPoster(BuildContext context, PosterType type) async {
+    final Widget screen = switch (type) {
+      PosterType.birthday => const BirthdayPosterScreen(),
+      PosterType.ordination => const OrdinationPosterScreen(),
+    };
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => screen),
+    );
+    if (!mounted) return;
+    await _loadReminders();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +68,18 @@ class MenuScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: AppColors.teal,
             foregroundColor: Colors.white,
+            actions: [
+              if (_pendingEvents.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Center(
+                    child: Badge.count(
+                      count: _pendingEvents.length,
+                      child: const Icon(Icons.notifications_active_outlined),
+                    ),
+                  ),
+                ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, bottom: 14),
               title: Text(
@@ -49,8 +112,31 @@ class MenuScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (_loadingReminders)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+            )
+          else if (_pendingEvents.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              sliver: SliverList.separated(
+                itemCount: _pendingEvents.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  return AnniversaryReminderBanner(event: _pendingEvents[index]);
+                },
+              ),
+            ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              _pendingEvents.isNotEmpty || _loadingReminders ? 20 : 20,
+              16,
+              24,
+            ),
             sliver: SliverList.separated(
               itemCount: PosterMenuItem.all.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -67,16 +153,6 @@ class MenuScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _openPoster(BuildContext context, PosterType type) {
-    final Widget screen = switch (type) {
-      PosterType.birthday => const BirthdayPosterScreen(),
-    };
-
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => screen),
     );
   }
 }

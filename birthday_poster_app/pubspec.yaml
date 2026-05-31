@@ -9,10 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  csv: ^6.0.0
+  flutter_local_notifications: ^18.0.1
+  http: ^1.2.2
+  image: ^4.2.0
   image_picker: ^1.1.2
+  intl: ^0.19.0
   path_provider: ^2.1.4
   share_plus: ^10.0.2
-  image: ^4.2.0
+  shared_preferences: ^2.3.3
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +29,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/poster_background.jpeg
+    - assets/data/dob.csv
+    - assets/data/ordination.csv
   fonts:
     - family: Montserrat
       fonts:

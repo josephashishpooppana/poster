@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PosterType { birthday }
+enum PosterType { birthday, ordination }
 
 class PosterMenuItem {
   const PosterMenuItem({
@@ -24,6 +24,14 @@ class PosterMenuItem {
       subtitle:
           'Clergy birthday layout — photo, name, date, and church positions',
       icon: Icons.cake_outlined,
+    ),
+    PosterMenuItem(
+      type: PosterType.ordination,
+      title: 'Ordination Poster',
+      subtitle:
+          'Clergy ordination layout — coming soon; reminders open a prefilled draft',
+      icon: Icons.church_outlined,
+      available: false,
     ),
   ];
 }
